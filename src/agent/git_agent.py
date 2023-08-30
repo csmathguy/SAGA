@@ -135,17 +135,23 @@ class GitAgent:
             logging.error(f"Failed to create or rename branch to 'main': {e}")
 
     def add_remote_origin(self, github_url):
-        """Add a remote origin to the local Git repository.
+        # Check if remote origin already exists
+        try:
+            result = subprocess.run(['git', 'remote', 'get-url', 'origin'], 
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if result.returncode == 0:
+                logging.info("Remote origin already exists. Skipping.")
+                return
+        except subprocess.CalledProcessError:
+            pass
 
-        Parameters:
-            github_url (str): The URL of the remote GitHub repository.
-        """
+        # Add remote origin
         try:
             subprocess.run(['git', 'remote', 'add', 'origin', github_url], check=True)
             logging.info(f"Successfully added remote origin: {github_url}")
         except subprocess.CalledProcessError as e:
             logging.error(f"Failed to add remote origin: {e}")
-
+    
     def push_to_remote(self, branch='main'):
         """Push changes to the remote Git repository.
 
