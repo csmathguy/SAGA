@@ -1,3 +1,4 @@
+import os
 from agent.git_agent import GitAgent  # Assuming your GitAgent class is in a file called git_agent.py
 import logging
 import config  # Import your config file
@@ -5,7 +6,7 @@ import config  # Import your config file
 def main():
     logging.basicConfig(level=logging.INFO)
 
-    git_agent = GitAgent(api_key=config.GIT_ACCESS_TOKEN, local_directory="/")
+    git_agent = GitAgent(api_key=config.GIT_ACCESS_TOKEN, local_directory=os.getcwd())
     
     setup_github_repository(git_agent,"csmathguy","SAGA", False)
     
