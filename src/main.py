@@ -24,7 +24,7 @@ def setup_branch_and_pr(git_agent, branch_name, commit_message, pr_title, pr_des
     git_agent.push_new_branch(branch_name)
 
     # Create a pull request
-    git_agent.create_pull_request(git_agent.default_branch, branch_name, pr_title, pr_description)
+    git_agent.create_pull_request(git_agent.default_branch, branch_name, pr_title, pr_description, username, repository)
 
 def setup_github_repository(git_agent, username, repo_name, private):
     """Set up a GitHub repository.
