@@ -163,3 +163,48 @@ class GitAgent:
             logging.info(f"Successfully pushed to remote branch: {branch}")
         except subprocess.CalledProcessError as e:
             logging.error(f"Failed to push to remote: {e}")
+
+    def create_new_branch(self, branch_name):
+        """Create a new branch and switch to it."""
+        try:
+            subprocess.run(['git', 'checkout', '-b', branch_name], cwd=self.local_directory, check=True)
+            logging.info(f"Successfully created and switched to branch {branch_name}.")
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Failed to create new branch {branch_name}: {e}")
+            
+    def push_new_branch(self, branch_name):
+        """Push the new branch to remote."""
+        try:
+            subprocess.run(['git', 'push', '-u', 'origin', branch_name], cwd=self.local_directory, check=True)
+            logging.info(f"Successfully pushed new branch {branch_name} to remote.")
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Failed to push new branch {branch_name} to remote: {e}")
+
+    def create_pull_request(self, base_branch, feature_branch, title, description, username, repository):
+        """Create a pull request from feature_branch to base_branch."""
+        
+        # Build the URL endpoint for the GitHub API
+        url = f'https://api.github.com/repos/{username}/{repository}/pulls'
+        
+        # Set up the headers for API authentication
+        headers = {
+            'Authorization': f'BEARER {self.api_key}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Create the payload to be sent in the API request
+        payload = {
+            'title': title,
+            'body': description,
+            'head': feature_branch,
+            'base': base_branch
+        }
+        
+        # Send a POST request to GitHub API to create a new pull request
+        response = requests.post(url, headers=headers, data=json.dumps(payload))
+        
+        # Check if the pull request was successfully created
+        if response.status_code == 201:
+            logging.info("Successfully created pull request.")
+        else:
+            logging.error(f"Failed to create pull request. {response.text}")
