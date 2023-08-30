@@ -1,4 +1,5 @@
 import logging
+import os
 import subprocess
 import requests
 import json
@@ -89,11 +90,17 @@ class GitAgent:
         else:
             logging.error(f'Failed to check repository existence. {response.text}')
             return False
+
     def initialize_local_repo(self):
         """Initialize a local Git repository."""
+        if self.local_directory is None:
+            logging.error("Local directory is not set.")
+            return
+        
         try:
-            subprocess.run(['git', 'init'], check=True)
-            logging.info("Successfully initialized local repository.")
+            if not os.path.exists(os.path.join(self.local_directory, ".git")):
+                subprocess.run(['git', 'init'], cwd=self.local_directory, check=True)
+                logging.info("Successfully initialized local repository.")
         except subprocess.CalledProcessError as e:
             logging.error(f"Failed to initialize local repository: {e}")
 
@@ -116,6 +123,16 @@ class GitAgent:
             logging.info("Successfully committed changes.")
         except subprocess.CalledProcessError as e:
             logging.error(f"Failed to commit changes: {e}")
+
+    def create_or_rename_branch_to_main(self):
+        """
+        Create or rename the default branch to 'main'.
+        """
+        try:
+            subprocess.run(['git', 'branch', '-M', 'main'], cwd=self.local_directory, check=True)
+            logging.info("Successfully created or renamed branch to 'main'.")
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Failed to create or rename branch to 'main': {e}")
 
     def add_remote_origin(self, github_url):
         """Add a remote origin to the local Git repository.
