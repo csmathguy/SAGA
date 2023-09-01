@@ -1,5 +1,7 @@
+import json
 import os
 from agent.git_agent import GitAgent  # Assuming your GitAgent class is in a file called git_agent.py
+from agent.gpt_agent import GPTAgent, Role
 import logging
 import config  # Import your config file
 
@@ -9,8 +11,46 @@ def main():
     git_agent = GitAgent(api_key=config.GIT_ACCESS_TOKEN, local_directory=os.getcwd())
     
     #setup_github_repository(git_agent,"csmathguy","SAGA", False)
-    setup_branch_and_pr(git_agent, "AddGitBranch","Add Git Branching and PR creation to code-base", "Add Git Branch and PR Creation","Add Git Branch and PR Creation", "csmathguy", "SAGA")
+    #setup_branch_and_pr(git_agent, "AddGitBranch","Add Git Branching and PR creation to code-base", "Add Git Branch and PR Creation","Add Git Branch and PR Creation", "csmathguy", "SAGA")
+    
+    #ask_jokester_about_ai()
+    ask_programmer_for_algorithm()
 
+    create_branch_GPTAgent(git_agent)
+
+def ask_jokester_about_ai():
+    # Initialize GPTAgent with JOKESTER role
+    jokester_agent = GPTAgent(api_key=config.CHATGPT_ACCESS_TOKEN, role=Role.JOKESTER)
+    
+    # Send a query about "AI"
+    query = "Tell me a joke about AI."
+    response_content_str = jokester_agent.ask_query(query)
+    
+    # Deserialize the string into a Python dictionary
+    response_content = json.loads(response_content_str)
+    
+    # Now this should work
+    joke_content = response_content.get('joke', 'No joke found')
+    answer_content = response_content.get('answer', 'No answer found')
+    
+    print(f"Joke: {joke_content}\nAnswer: {answer_content}")
+
+def ask_programmer_for_algorithm():
+    # Initialize GPTAgent with PROGRAMMER role
+    programmer_agent = GPTAgent(api_key=config.CHATGPT_ACCESS_TOKEN, role=Role.PROGRAMMER)
+
+    # Send a query about "Sorting Algorithm"
+    query = "Can you provide a Python code snippet for a bubble sort algorithm?"
+    response_content_str = programmer_agent.ask_query(query)
+
+    # Deserialize the string into a Python dictionary
+    # Note: This step may not be necessary if ask_query() returns a string directly
+    response_content = json.loads(response_content_str) if isinstance(response_content_str, str) else response_content_str
+
+    # Now this should work
+    code_content = response_content.get('code', 'No code found')
+
+    print(f"Code: {code_content}")
 
 def setup_branch_and_pr(git_agent, branch_name, commit_message, pr_title, pr_description, username, repository):
     # Create and switch to a new feature branch
@@ -25,6 +65,36 @@ def setup_branch_and_pr(git_agent, branch_name, commit_message, pr_title, pr_des
 
     # Create a pull request
     git_agent.create_pull_request(git_agent.default_branch, branch_name, pr_title, pr_description, username, repository)
+
+def create_branch_GPTAgent(git_agent):
+    """Get details for git operations like commit message, PR title, and PR description.
+
+    Returns:
+        tuple: A tuple containing commit message, PR title, PR description, username, repository, and branch name.
+    """
+    branch_name = "feature/add-GPTAgent-and-roles"
+    commit_message = "Add GPTAgent class, role-based system prompts, and unit tests"
+    pr_title = "Implement GPTAgent Class with Role-based System Prompts and Unit Tests"
+    pr_description = """## Summary
+    This PR implements the `GPTAgent` class, a utility for interacting with the GPT-4 API. The class is designed to be role-based, meaning it can adapt its behavior and queries based on the specified role (e.g., Programmer, Jokester).
+    ## Changes
+    - Add `GPTAgent` class with methods for loading system prompts, sending queries, and parsing responses.
+    - Add `Role` enum class to define the roles that the `GPTAgent` can take on.
+    - Add system prompt files `programmer.txt` and `jokester.txt` for respective roles.
+    - Add unit tests for testing all the functionalities of `GPTAgent`.
+    ## How to Test
+    1. Run the unit tests to ensure all functionalities are working as expected.
+    2. Manually test the `GPTAgent` class by initializing it with different roles and queries.
+    ## Impact
+    This PR sets the foundation for role-based interactions with the GPT-4 API, enabling more dynamic and context-aware queries and responses."""
+
+    username = "csmathguy"
+    repository = "SAGA"
+    
+
+    setup_branch_and_pr(git_agent, branch_name, commit_message, pr_title, pr_description, username, repository)
+
+
 
 def setup_github_repository(git_agent, username, repo_name, private):
     """Set up a GitHub repository.
