@@ -4,6 +4,7 @@ from agent.codebase import CodebaseAgent
 from agent.git_agent import GitAgent  # Assuming your GitAgent class is in a file called git_agent.py
 from agent.gpt_agent import GPTAgent, Role
 import logging
+from agent.programmer import ProgrammerAgent
 import config  # Import your config file
 
 def main():
@@ -20,6 +21,11 @@ def main():
 
     display_current_directory_structure()
     create_branch_CodebaseAgent(git_agent)
+
+def programmer_testing():
+    current_directory = os.getcwd()
+    programmer_agent = ProgrammerAgent(codebase_repo_path=f"{current_directory}/output", gpt_api_key=config.CHATGPT_ACCESS_TOKEN)
+    programmer_agent.perform_task("create a function that sorts an array")
 
 def display_current_directory_structure():
     # Initialize the CodebaseAgent with the current working directory
