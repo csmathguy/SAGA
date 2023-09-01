@@ -1,5 +1,6 @@
 import json
 import os
+from agent.codebase import CodebaseAgent
 from agent.git_agent import GitAgent  # Assuming your GitAgent class is in a file called git_agent.py
 from agent.gpt_agent import GPTAgent, Role
 import logging
@@ -14,9 +15,21 @@ def main():
     #setup_branch_and_pr(git_agent, "AddGitBranch","Add Git Branching and PR creation to code-base", "Add Git Branch and PR Creation","Add Git Branch and PR Creation", "csmathguy", "SAGA")
     
     #ask_jokester_about_ai()
-    ask_programmer_for_algorithm()
+    #ask_programmer_for_algorithm()
+    #create_branch_GPTAgent(git_agent)
 
-    create_branch_GPTAgent(git_agent)
+    display_current_directory_structure()
+    create_branch_CodebaseAgent(git_agent)
+
+def display_current_directory_structure():
+    # Initialize the CodebaseAgent with the current working directory
+    current_directory = os.getcwd()
+    agent = CodebaseAgent(current_directory)
+    structure = agent.get_directory_structure(exclusions=["__pycache__", "venv",".git", "objects"])
+    
+    # Use JSON.dumps for pretty-printing the dictionary
+    print("Directory Structure of Current Working Directory:")
+    print(json.dumps(structure, indent=4))
 
 def ask_jokester_about_ai():
     # Initialize GPTAgent with JOKESTER role
@@ -92,6 +105,30 @@ def create_branch_GPTAgent(git_agent):
     repository = "SAGA"
     
 
+    setup_branch_and_pr(git_agent, branch_name, commit_message, pr_title, pr_description, username, repository)
+
+def create_branch_CodebaseAgent(git_agent):
+    """Get details for git operations like commit message, PR title, and PR description.
+
+    Returns:
+        tuple: A tuple containing commit message, PR title, PR description, username, repository, and branch name.
+    """
+    branch_name = "feature/add-CodebaseAgent-functionality"
+    commit_message = "Add get_directory_structure method in CodebaseAgent"
+    pr_title = "Implement get_directory_structure in CodebaseAgent Class"
+    pr_description = """## Summary
+    This PR implements the `get_directory_structure` method in `CodebaseAgent`. This method provides an efficient way to get the directory structure starting from a given path.
+    ## Changes
+    - Add `get_directory_structure` method in `CodebaseAgent`.
+    - Add unit tests for `get_directory_structure`.
+    ## How to Test
+    Run the unit tests to ensure all functionalities are working as expected.
+    ## Impact
+    This PR adds a key functionality to the `CodebaseAgent` class."""
+
+    username = "csmathguy"
+    repository = "SAGA"
+    
     setup_branch_and_pr(git_agent, branch_name, commit_message, pr_title, pr_description, username, repository)
 
 
