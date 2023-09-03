@@ -1,0 +1,28 @@
+Please refactor the following code:
+
+    def get_code(self, task_description):
+        try:
+            # Step 1: Gather project info
+            project_structure = self.codebase_agent.get_directory_structure()
+
+            # Step 2: Ask GPTAgent for the code
+            query = f"Given the project structure {project_structure}, {task_description}."
+            response_content_str = self.gpt_agent.ask_query(query)
+            
+            logging.info(f"Raw Response: {response_content_str}")
+            
+            # Deserialize the response
+            response_content = json.loads(response_content_str)
+
+            # Extract code from the response
+            code_content = response_content.get('code', 'No code found')
+            
+            return code_content
+    
+        except json.JSONDecodeError as e:
+            logging.error(f"JSON Decode Error: {e}")
+            logging.error(f"Failed Task Description: {task_description}")
+        except Exception as e:
+            logging.error(f"An unexpected error occurred: {e}")
+
+to follow PEP 8 and use PEP 8 comments.    

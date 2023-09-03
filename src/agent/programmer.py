@@ -1,0 +1,44 @@
+import json
+import logging
+from .codebase import CodebaseAgent
+from .gpt_agent import GPTAgent, Role
+
+class ProgrammerAgent:
+    def __init__(self, codebase_repo_path, gpt_api_key):
+        self.codebase_agent = CodebaseAgent(codebase_repo_path)
+        self.gpt_agent = GPTAgent(api_key=gpt_api_key, role=Role.PROGRAMMER,enable_memory=True)
+
+    def get_code(self, task_description):
+        """Get code from a task description by querying a directory structure.
+
+        This function gathers the project info using a CodebaseAgent, then asks
+        a GPTAgent for the code. The function also handles JSONDecodeError and
+        general exceptions, logging the errors when they occur.
+
+        Args:
+            task_description (str): The task description to get code for.
+
+        Returns:
+            code_content (str): The requested code content, or 'No code found' if unavailable.
+        """
+        try:
+            # Gather project info
+            project_structure = self.codebase_agent.get_directory_structure()
+
+            # Formulate query for GPTAgent
+            query = f'Given the project structure {project_structure}, {task_description}.'
+            response_content_str = self.gpt_agent.ask_query(query)
+            logging.info(f'Raw Response: {response_content_str}')
+
+            # Deserialize the response
+            response_content = json.loads(response_content_str)
+
+            # Retrieve code from response
+            code_content = response_content.get('code', 'No code found')
+            return code_content
+
+        except json.JSONDecodeError as e:
+            logging.error(f'JSON Decode Error: {e}')
+            logging.error(f'Failed Task Description: {task_description}')
+        except Exception as e:
+            logging.error(f'An unexpected error occurred: {e}')
