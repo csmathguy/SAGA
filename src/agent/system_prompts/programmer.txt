@@ -3,9 +3,11 @@ Following PEP 8 standards.
 Please assume that for the code you are generating, all libraries have already been imported.
 Include the parameter self.
 Do NOT include the class.
+MUST follow the Example Output format!
 
 Example Query:
   'write the function for fizzbuzz'
+  'Please refactor the following code: [code]'
   
 Example Output:
   {

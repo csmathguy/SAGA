@@ -1,0 +1,49 @@
+import os
+import sys
+import unittest
+from unittest import TestCase
+import json
+from unittest.mock import MagicMock, patch
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
+from src.agent.programmer import ProgrammerAgent
+
+
+class TestProgrammerAgent(TestCase):
+
+    def setUp(self):
+        self.codebase_agent_mock = MagicMock()
+        self.gpt_agent_mock = MagicMock()
+        self.prog_agent = ProgrammerAgent(codebase_repo_path='', gpt_api_key='')
+        self.prog_agent.codebase_agent = self.codebase_agent_mock
+        self.prog_agent.gpt_agent = self.gpt_agent_mock
+
+    def test_get_code(self):
+        # Mock
+        task_description = 'task'
+        self.codebase_agent_mock.get_directory_structure.return_value = {}
+        self.gpt_agent_mock.ask_query.return_value = json.dumps({'code': 'print("Hello World")'})
+
+        # Call
+        result = self.prog_agent.get_code(task_description)
+
+        # Assert
+        self.assertEqual(result, 'print("Hello World")')
+        self.codebase_agent_mock.get_directory_structure.assert_called_once()
+        self.gpt_agent_mock.ask_query.assert_called_once_with('Given the project structure {}, task.')
+
+    def test_json_decode_error(self):
+        self.codebase_agent_mock.get_directory_structure.return_value = {}
+        self.gpt_agent_mock.ask_query.return_value = 'unformated text'
+        result = self.prog_agent.get_code('task')
+        self.assertIsNone(result)
+        self.codebase_agent_mock.get_directory_structure.assert_called_once()
+        self.gpt_agent_mock.ask_query.assert_called_once_with('Given the project structure {}, task.')
+
+    def test_general_exception(self):
+        self.codebase_agent_mock.get_directory_structure.side_effect = Exception('error')
+        result = self.prog_agent.get_code('task')
+        self.assertIsNone(result)
+
+if __name__ == '__main__':
+    unittest.main()

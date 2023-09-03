@@ -1,0 +1,91 @@
+Please create unit tests for the following code:
+
+import json
+import logging
+from agent.codebase import CodebaseAgent
+from agent.gpt_agent import GPTAgent, Role
+
+class ProgrammerAgent:
+    def __init__(self, codebase_repo_path, gpt_api_key):
+        self.codebase_agent = CodebaseAgent(codebase_repo_path)
+        self.gpt_agent = GPTAgent(api_key=gpt_api_key, role=Role.PROGRAMMER,enable_memory=True)
+
+    def get_code(self, task_description):
+        """Get code from a task description by querying a directory structure.
+
+        This function gathers the project info using a CodebaseAgent, then asks
+        a GPTAgent for the code. The function also handles JSONDecodeError and
+        general exceptions, logging the errors when they occur.
+
+        Args:
+            task_description (str): The task description to get code for.
+
+        Returns:
+            code_content (str): The requested code content, or 'No code found' if unavailable.
+        """
+        try:
+            # Gather project info
+            project_structure = self.codebase_agent.get_directory_structure()
+
+            # Formulate query for GPTAgent
+            query = f'Given the project structure {project_structure}, {task_description}.'
+            response_content_str = self.gpt_agent.ask_query(query)
+            logging.info(f'Raw Response: {response_content_str}')
+
+            # Deserialize the response
+            response_content = json.loads(response_content_str)
+
+            # Retrieve code from response
+            code_content = response_content.get('code', 'No code found')
+            return code_content
+
+        except json.JSONDecodeError as e:
+            logging.error(f'JSON Decode Error: {e}')
+            logging.error(f'Failed Task Description: {task_description}')
+        except Exception as e:
+            logging.error(f'An unexpected error occurred: {e}')
+
+Given the below example TestCase:
+
+import os
+import sys
+import unittest
+from unittest import TestCase
+import json
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
+from src.agent.codebase import CodebaseAgent
+
+class TestCodebaseAgent(TestCase):
+
+    def setUp(self):
+        self.agent = CodebaseAgent('tests/unit/codebaseFolderTest')  # Update this path to your actual test directory
+
+    def test_get_directory_structure_full(self):
+        expected_structure = {
+            'file1.txt': None,
+            'folder1': {
+                'file2.txt': None,
+            },
+            'folder2': {
+                'folder3': {
+                    'file3.txt': None
+                }
+            }
+        }
+
+        self.assertEqual(self.agent.get_directory_structure(), expected_structure)
+
+    def test_get_directory_structure_subdir(self):
+        expected_structure = {
+            'folder3': {
+                'file3.txt': None
+            }
+        }
+        self.assertEqual(self.agent.get_directory_structure('tests/unit/codebaseFolderTest/folder2'), expected_structure)
+
+if __name__ == '__main__':
+    unittest.main()
+
+
+But for the Programmer.py code above

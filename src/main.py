@@ -1,9 +1,12 @@
 import json
 import os
+import shutil
+import pyperclip
 from agent.codebase import CodebaseAgent
 from agent.git_agent import GitAgent  # Assuming your GitAgent class is in a file called git_agent.py
 from agent.gpt_agent import GPTAgent, Role
 import logging
+from agent.programmer import ProgrammerAgent
 import config  # Import your config file
 
 def main():
@@ -18,8 +21,62 @@ def main():
     #ask_programmer_for_algorithm()
     #create_branch_GPTAgent(git_agent)
 
-    display_current_directory_structure()
-    create_branch_CodebaseAgent(git_agent)
+    #display_current_directory_structure()
+    #create_branch_CodebaseAgent(git_agent)
+
+    #programmer_test()
+    create_pr_for_programmer_agent(git_agent)
+    process_request()
+
+def process_request():
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    request_folder = os.path.join(current_directory, 'requests')
+    results_folder = os.path.join(current_directory, 'requests/results')
+
+    logging.info("Starting process_request function.")
+
+    # Create results_folder if it doesn't exist
+    if not os.path.exists(results_folder):
+        os.makedirs(results_folder)
+        logging.info(f"Created results folder at {results_folder}")
+
+    for filename in os.listdir(request_folder):
+        filepath = os.path.join(request_folder, filename)
+
+        if os.path.isdir(filepath) or filename.startswith('_'):  # Ignore folders and files starting with _
+            continue
+
+        logging.info(f"Processing file: {filepath}")
+
+        with open(filepath, 'r') as file:
+            task_description = file.read().strip()
+
+        # Initialize ProgrammerAgent and get code
+        programmer_agent = ProgrammerAgent(
+            codebase_repo_path=f"{current_directory}/output",
+            gpt_api_key=config.CHATGPT_ACCESS_TOKEN
+        )
+        result = programmer_agent.get_code(task_description)
+        logging.info("Received code from ProgrammerAgent.")
+
+        # Save the result to a new file in /requests/results folder
+        result_filepath = os.path.join(results_folder, filename)
+        with open(result_filepath, 'w') as result_file:
+            result_file.write(result)
+        logging.info(f"Saved result to {result_filepath}")
+
+        # Rename the original file to indicate it has been processed
+        processed_filepath = os.path.join(request_folder, f"_{filename}")
+        shutil.move(filepath, processed_filepath)
+        logging.info(f"Renamed processed file to {processed_filepath}")
+
+
+def programmer_test():
+    current_directory = os.getcwd()
+    programmer_agent = ProgrammerAgent(codebase_repo_path=f"{current_directory}/output", gpt_api_key=config.CHATGPT_ACCESS_TOKEN)
+    result = programmer_agent.get_code("create a function that checks if a number is prime.")
+    print (result)
+    pyperclip.copy(result)
 
 def display_current_directory_structure():
     # Initialize the CodebaseAgent with the current working directory
@@ -106,6 +163,36 @@ def create_branch_GPTAgent(git_agent):
     
 
     setup_branch_and_pr(git_agent, branch_name, commit_message, pr_title, pr_description, username, repository)
+
+def create_pr_for_programmer_agent(git_agent):
+    """Get details for git operations like commit message, PR title, and PR description.
+
+    Returns:
+        tuple: A tuple containing commit message, PR title, PR description, username, repository, and branch name.
+    """
+    branch_name = "feature/add-ProgrammerAgent"
+    commit_message = "Add Programmer class for managing project setup and configuration"
+    pr_title = "Implement Programmer Class for Dynamic Project Setup and Configuration"
+    pr_description = """## Summary
+    This PR introduces a new `Programmer` class that encapsulates several utilities and features necessary for automating project setup and configuration.
+    
+    ## Changes
+    - Add `Programmer` class with integrated GitAgent, IOManager, and PythonManager.
+    - Include methods for setting up requirements.txt, main.py, README.md, and config.py.
+    - Provide Git ignore configuration within the class.
+    
+    ## How to Test
+    1. Run the unit tests to ensure all functionalities are working as expected.
+    2. Manually test the `Programmer` class by initializing it and running setup_project method.
+    
+    ## Impact
+    This PR enables automatic setup and configuration of Python projects, significantly reducing manual setup overhead and errors."""
+    
+    username = "csmathguy"
+    repository = "SAGA"
+
+    setup_branch_and_pr(git_agent, branch_name, commit_message, pr_title, pr_description, username, repository)
+
 
 def create_branch_CodebaseAgent(git_agent):
     """Get details for git operations like commit message, PR title, and PR description.
